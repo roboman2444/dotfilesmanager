@@ -1,0 +1,35 @@
+[[vim]]
+vimrc -> .vimrc
+vim_plugins -> .vim
+    [ted@helios]
+    laptop_vim -> .vim/bundle/laptop_vim
+
+[[bash]]
+bashrc -> .bashrc
+bash_aliases -> .bashrc
+bash -> .bash
+    [ted@media]
+    remote_bash -> .bashrc
+
+[[tmux]]
+tmuxrc -> .tmux.conf
+
+[[tint3]]
+tint3rc -> .tint3rc
+
+[[compton]]
+comptonrc -> .compton.conf
+
+[[X11]]
+xinitrc -> .xinitrc
+xresources -> .Xresources
+
+[[config]]
+bspwmrc -> .config/bspwm/bspwmrc
+sxhkdrc -> .config/sxhkd/sxhkdrc
+mutt_gmail -> .config/mutt/gmail
+mutt_mailcap -> .config/mutt/mailcap
+mutt_crypto -> .config/mutt/crypto
+mutt_shadow -> .config/mutt/shadow.gpg
+dunstrc -> .config/dunst/dunstrc
+psgrc -> .config/psg/psgrc
