@@ -224,6 +224,7 @@ char *get_dotfiles_dir() {
     return result;
 }
 
+#define DEBUG
 
 char *get_home_file(char *s) {
     char *home = get_user_home();
@@ -325,7 +326,7 @@ int main(int argc, char **argv) {
         sprintf(mv, "mv %s %s", file, name);
         system(mv);
         symlink(name, file);
-        char *arrow = calloc(sizeof(char), strlen(file+5+strlen(name)));
+        char *arrow = calloc(sizeof(char), strlen(file)+5+strlen(name));
         sprintf(arrow, "%s -> %s", argv[3], argv[2]);
      
         dmap *in;
