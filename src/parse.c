@@ -133,6 +133,7 @@ dmap *lines_to_block_structure(dlist *lines) {
         } else if (matches(line, block)) {
             if (!nextblock) {
                 perror("Found a [user@host] before a [[block]]. Exiting...");
+                exit(1);
             }
             hblock *nexthost = calloc(sizeof(hblock), 1);
             nexthost->symlinks = dlist_new();
@@ -141,6 +142,7 @@ dmap *lines_to_block_structure(dlist *lines) {
         } else {
             if (!nextblock) {
                 perror("Found a symlink definition outside a [[block]]. Exiting ...");
+                exit(1);
             }
             dlist_add(nextlist, line);
         }
