@@ -263,6 +263,12 @@ void sync() {
     }
 }
 
+int does_file_exist(char *filename) {
+    struct stat st;
+    int result = stat(filename, &st);
+    return result == 0;
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) { // no args
         cmdlist();
@@ -308,6 +314,12 @@ int main(int argc, char **argv) {
     if (strncmp(argv[1], "--track", 8) == 0) {
         char *file = argv[2];
         char *name = get_dotfiles_file(argv[3]);
+    
+        if (does_file_exist(name)) {
+            perror("can't track with that name, it already exists");
+            return 1;
+        }
+
         char *mv = calloc(sizeof(char), strlen(file)+5+strlen(name));
         sprintf(mv, "mv %s %s", file, name);
         system(mv);
@@ -392,35 +404,3 @@ int main(int argc, char **argv) {
     }
 }
 
-
-
-
-
-
-
-/*
-   int main() {
-   FILE *test = fopen("test", "r");
-   FILE *out = fopen("output", "w");
-
-   dlist *lines = intern_lines(test);
-
-
-
-   dmap *in = lines_to_block_structure(lines);
-   write_to_file(out, in);
-   fclose(out);
-
-
-
-
-   dmap *symlinks = lines_to_symlinks(lines);
-
-   char *symto;
-   char *symfr;
-
-   map_each(symlinks, symto, symfr) {
-   printf("%s --> %s\n", symto, symfr);
-   }
-   }
-   */
