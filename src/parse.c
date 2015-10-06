@@ -222,7 +222,6 @@ char *get_dotfiles_dir() {
     return result;
 }
 
-#define DEBUG 1
 
 char *get_home_file(char *s) {
     char *home = get_user_home();
