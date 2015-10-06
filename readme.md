@@ -26,7 +26,7 @@ if the --block flag and name are specified,
    user@host sub-block will be where the sumlink is
    tracked. NOTE: this will NOT track symlinks!
 
-   dotfiles --list [BLOCK] [--host USER@HOST]
+###dotfiles --list [BLOCK] [--host USER@HOST]
    lists all blocks by name, or if a BLOCK name is
    specified, list only the contents of that block
    if the host flag and HOST are provided, it will
