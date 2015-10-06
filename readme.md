@@ -1,21 +1,21 @@
-#A dotfiles manager for the command line
+#A commandline dotfiles manager
 
 
-dotfiles --git REPO
+###dotfiles --git REPO
 clones from REPO into ~/.dotfiles and runs
 'dotfiles --init ~/.dotfiles'
 
-dotfiles --sync
+###dotfiles --sync
 refresh the symlinks in the home directory
 
-dotfiles --init [DIR]
+###dotfiles --init [DIR]
 if no DIR is provided, create ~/.dotfiles, otherwise
 copies the DIR to ~/.dotfiles and creates a
 symlink to ~/.dotfiles in the old location.
 then finds a dotfiles file in ~/.dotfiles/
 and initializes from it. 
 
-dotfiles --track FILE NAME [--block BLOCK] [--host]
+###dotfiles --track FILE NAME [--block BLOCK] [--host]
 moves ~/FILE to ~/.dotfiles/NAME and creates a
 symlink named ~/FILE pointing to ~/.dotfiles/NAME
 if the --block flag and name are specified,
