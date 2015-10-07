@@ -61,6 +61,22 @@ char *get_user_at_host() {
     return result;
 }
 
+void add_symlink(dmap *result, char *line) {
+    char *key, *value=line;
+    int spaces = 0;
+    while(*line) {
+        if (*line == ' ') {
+            *line = 0;
+            spaces++;
+        } else if (spaces == 2) {
+            key=line;
+            spaces = 3;
+        }
+        line++;
+    }
+    put(result, key, value);
+}
+
 dmap *lines_to_symlinks(dlist *lines) {
     struct state *title = make_state_machine("\\[\\[.+\\]\\]");
     struct state *block = make_state_machine("\\[.+\\]");
@@ -78,23 +94,31 @@ dmap *lines_to_symlinks(dlist *lines) {
         } else if (matches(line, block)) {
             creating = (matches(line, ushst));
         } else if (creating) {
-            char *key, *value=line;
-            int spaces = 0;
-            while(*line) {
-                if (*line == ' ') {
-                    *line = 0;
-                    spaces++;
-                } else if (spaces == 2) {
-                    key=line;
-                    spaces = 3;
-                }
-                line++;
-            }
-            put(result, key, value);
+            add_symlink(result, line);
         }
     }
     return result;
 }
+
+dmap *block_to_symlinks(cblock *block) {
+    struct state *ushst = make_state_machine(get_user_at_host());
+    dmap *result = map_new();
+
+    char *line;
+    hblock *hsp;
+    each(block->defaults, line) {
+        add_symlink(result, line);
+    }
+    map_each(block->userhost, line, hsp) {
+        if (matches(line, ushst)) {
+            each(hsp->symlinks, line) {
+                add_symlink(result, line);
+            }
+        }
+    }
+    return result;
+}
+
 
 char *strdup(const char *str) {
     int n = strlen(str) + 1;
@@ -173,14 +197,20 @@ void write_to_file(FILE *file, dmap *blocks) {
 }
 
 void cmdlist() {
-    puts("dotfiles --git REPO");
-    puts("   clones from REPO into ~/.dotfiles and runs");
-    puts("   'dotfiles --init ~/.dotfiles'");
+    puts("dotfiles --git REPO [BLOCK]");
+    puts("   if BLOCK is not defined, clone REPO into");
+    puts("   ~/.dotfiles-remote, overwriting if necessary");
+    puts("   otherwise, it will do a similar clone, but");
+    puts("   the provided BLOCK and corresponding files");
+    puts("   will be copied into ~/.dotfiles, ONLY if that");
+    puts("   block does not already exist in ~/.dotfiles/dotfiles");
+    puts("   if ~/.dotfiles does not exist, 'dotfiles --init'");
+    puts("   will be run before");
     puts("");
     puts("dotfiles --sync");
     puts("   refresh the symlinks in the home directory");
     puts("");
-    puts("dotfiles --init [DIR]");
+    puts("dotfiles --init");
     puts("   if no DIR is provided, create ~/.dotfiles, otherwise");
     puts("   copies the DIR to ~/.dotfiles and creates a");
     puts("   symlink to ~/.dotfiles in the old location.");
@@ -224,7 +254,6 @@ char *get_dotfiles_dir() {
     return result;
 }
 
-#define DEBUG
 
 char *get_home_file(char *s) {
     char *home = get_user_home();
@@ -243,6 +272,14 @@ char *get_home_file(char *s) {
     return result;
 }
 
+char *get_git_dotfiles_file(char *s) {
+    char *home = get_dotfiles_dir();
+    int len = strlen(home) + 7 + strlen(s);
+    char *result = calloc(sizeof(char), len);
+    sprintf(result, "%s-remote/%s", home, s);
+    return result;
+}
+
 char *get_dotfiles_file(char *s) {
     char *home = get_dotfiles_dir();
     int len = strlen(home) + 1 + strlen(s);
@@ -251,17 +288,23 @@ char *get_dotfiles_file(char *s) {
     return result;
 }
 
+void sync_advanced(dmap *symlinks, char*(*modifier)(char *)) {
+    char *name;
+    char *lito;
+
+    map_each(symlinks, name, lito) {
+        if (symlink(modifier(lito), get_home_file(name))) {
+            printf("could not symlink file %s\n", get_home_file(name));
+        }
+    }
+}
+
 void sync() {
     FILE *dots = fopen(get_dotfiles_file("dotfiles"), "r");
     if (dots) {
         dlist *lines = intern_lines(dots);
         dmap *symlinks = lines_to_symlinks(lines);
-        char *name;
-        char *lito;
-        map_each(symlinks, name, lito) {
-            printf("syncing %s\n", name); 
-            symlink(get_dotfiles_file(lito), get_home_file(name));
-        }
+        sync_advanced(symlinks, &get_dotfiles_file);
     }
 }
 
@@ -278,8 +321,33 @@ int main(int argc, char **argv) {
     }
 
     if (strncmp(argv[1], "--git", 6) == 0) {
-        perror("'dotfiles --git REPO' is not yet implemented");
-        return 1;
+        char *gitcmd = calloc(sizeof(char), strlen(argv[2]) + 30);
+        sprintf(gitcmd, "git clone %s ~/.dotfiles-remote", argv[2]);
+        system("rm -rf ~/.dotfiles-remote");
+        system(gitcmd);
+        
+        if (argc == 4) { // has a block
+            char *block = calloc(sizeof(char), strlen(argv[3])+5);
+            sprintf(block, "[[%s]]", argv[3]);
+            
+            FILE *dots = fopen(get_git_dotfiles_file("dotfiles"), "r");
+            if (dots) {
+                dlist *lines = intern_lines(dots);
+                fclose(dots);
+                dmap *in = lines_to_block_structure(lines);
+                
+                cblock *cblock = get(in, block);
+                if (!cblock) {
+                    perror("not a valid group, exiting...");
+                    return 1;
+                }
+                dmap *syms = block_to_symlinks(cblock);
+                sync_advanced(syms, &get_git_dotfiles_file);
+            } else {
+                perror("not a valid dotfiles repository");
+                return 1;
+            }
+        }
     }
 
     if (strncmp(argv[1], "--sync", 7) == 0) {
@@ -313,7 +381,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strncmp(argv[1], "--track", 8) == 0) {
+    if (strncmp(argv[1], "--track", 8) == 0) { // TODO some tweaks on tracking
         char *file = argv[2];
         char *name = get_dotfiles_file(argv[3]);
     
