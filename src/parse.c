@@ -234,7 +234,7 @@ void cmdlist() {
     puts("   otherwise, it will create a new block named");
     puts("   BLOCK_N, where N is some number, and add it there");
     puts("   if the host flag is specified, then the current");
-    puts("   user@host sub-block will be where the sumlink is");
+    puts("   user@host sub-block will be where the symlink is");
     puts("   tracked. NOTE: this will NOT track symlinks!");
     puts("");
     puts("dotfiles --list [BLOCK] [--host USER@HOST]");
