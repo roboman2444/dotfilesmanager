@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-	char *file = argv[2];
+        char *file = argv[2];
         char *name = get_dotfiles_file(argv[3]);
     
         if (does_file_exist(name)) {
