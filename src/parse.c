@@ -5,6 +5,8 @@
  *
  */
 
+#define _DEFAULT_SOURCE
+
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -234,6 +236,9 @@ void cmdlist() {
     puts("   if the host flag and HOST are provided, it will");
     puts("   list all the files for that user@host instead of");
     puts("   the current user#host");
+    puts("dotfiles --check");
+    puts("   check the status of current files, report any that");
+    puts("   aren't pointing to the proper symlink");
 }
 
 char *get_user_home() {
@@ -314,6 +319,27 @@ int does_file_exist(char *filename) {
     return result == 0;
 }
 
+void check() {
+    FILE *dots = fopen(get_dotfiles_file("dotfiles"), "r");
+    if (dots) {
+        dlist *lines = intern_lines(dots);
+        dmap *symlinks = lines_to_symlinks(lines);
+        char *name;
+        char *link;
+        map_each(symlinks, name, link) {
+            struct stat buf;
+            char *file = get_home_file(name);
+
+            lstat(file, &buf);
+            printf("checking ... (%s->%s)\n", file, link);
+            if (!S_ISLNK(buf.st_mode)) {
+                printf("WARNING: %s is not properly linked!\n", file);
+            }
+
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) { // no args
         cmdlist();
@@ -352,6 +378,11 @@ int main(int argc, char **argv) {
 
     if (strncmp(argv[1], "--sync", 7) == 0) {
         sync();
+        return 0;
+    }
+
+    if (strncmp(argv[1], "--check", 8) == 0) {
+        check();
         return 0;
     }
 
