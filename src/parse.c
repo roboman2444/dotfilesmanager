@@ -209,7 +209,7 @@ void write_to_file(FILE *file, dmap *blocks) {
 }
 
 void cmdlist() {
-    puts("dotfiles --test GIT [BLOCK* | --interactive]");
+    puts("dotfiles --share GIT [BLOCK* | --interactive]");
     puts("   clones the GIT repository into /tmp/dotfiles/REPONAME.");
     puts("   if any BLOCK is specified, symlink those block's");
     puts("   contents into their proper locations.");
@@ -274,11 +274,11 @@ char *get_home_file(char *s) {
         exit(1);
     }
     if (s[0] == '/') {
-        return s;
+        return strdup(s);
     }
 
     char *home = get_user_home();
-    int more = 1;
+    int more = 2;
     int len = strlen(home) + more + strlen(s);
     char *result = calloc(sizeof(char), len);
     sprintf(result, "%s/%s", home, s);
@@ -306,17 +306,16 @@ void sync_advanced(dmap *symlinks, char*(*modifier)(char *)) {
     char *lito;
 
     map_each(symlinks, name, lito) {
-        name = get_home_file(name);
         char *name2 = get_home_file(name);
+        name = get_home_file(name);
         if (is_symlink(name)) {
             if (unlink(name)) {
                 puts("cannot unlink");
             }
         }
-        puts(name2);
-        if (symlink(modifier(lito), name2)) {
-            puts(name2);
-            printf("could not symlink file %s\n", name2);
+
+        if (symlink(modifier(lito), name)) {
+            printf("name: %p: %s\nname2: %p %s\n", name, name, name2, name2);
         }
     }
 }
@@ -360,34 +359,9 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strncmp(argv[1], "--git", 6) == 0) {
-        char *gitcmd = calloc(sizeof(char), strlen(argv[2]) + 30);
-        sprintf(gitcmd, "git clone %s ~/.dotfiles-remote", argv[2]);
-        system("rm -rf ~/.dotfiles-remote");
-        system(gitcmd);
-        
-        if (argc == 4) { // has a block
-            char *block = calloc(sizeof(char), strlen(argv[3])+5);
-            sprintf(block, "[[%s]]", argv[3]);
-            
-            FILE *dots = fopen(get_git_dotfiles_file("dotfiles"), "r");
-            if (dots) {
-                dlist *lines = intern_lines(dots);
-                fclose(dots);
-                dmap *in = lines_to_block_structure(lines);
-                
-                cblock *cblock = get(in, block);
-                if (!cblock) {
-                    perror("not a valid group, exiting...");
-                    return 1;
-                }
-                dmap *syms = block_to_symlinks(cblock);
-                sync_advanced(syms, &get_git_dotfiles_file);
-            } else {
-                perror("not a valid dotfiles repository");
-                return 1;
-            }
-        }
+    if (strncmp(argv[1], "--share", 8) == 0) {
+        puts("sharing will be implemented soon");
+        exit(0);
     }
 
     if (strncmp(argv[1], "--sync", 7) == 0) {
