@@ -243,6 +243,7 @@ void cmdlist() {
     puts("   if the host flag and HOST are provided, it will");
     puts("   list all the files for that user@host instead of");
     puts("   the current user#host");
+    puts("");
     puts("dotfiles --check");
     puts("   check the status of current files, report any that");
     puts("   aren't pointing to the proper symlink");
