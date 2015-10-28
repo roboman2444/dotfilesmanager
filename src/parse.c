@@ -61,6 +61,14 @@ char *get_user_at_host() {
     return result;
 }
 
+int is_symlink(char *file) {
+    if (!file) {
+        perror("cannot operate on null file");
+        exit(1);
+    }
+    
+}
+
 void add_symlink(dmap *result, char *line) {
     char *key, *value=line;
     int spaces = 0;
@@ -197,15 +205,12 @@ void write_to_file(FILE *file, dmap *blocks) {
 }
 
 void cmdlist() {
-    puts("dotfiles --git REPO [BLOCK]");
-    puts("   if BLOCK is not defined, clone REPO into");
-    puts("   ~/.dotfiles-remote, overwriting if necessary");
-    puts("   otherwise, it will do a similar clone, but");
-    puts("   the provided BLOCK and corresponding files");
-    puts("   will be copied into ~/.dotfiles, ONLY if that");
-    puts("   block does not already exist in ~/.dotfiles/dotfiles");
-    puts("   if ~/.dotfiles does not exist, 'dotfiles --init'");
-    puts("   will be run before");
+    puts("dotfiles --test GIT [BLOCK* | --interactive]");
+    puts("   clones the GIT repository into /tmp/dotfiles/REPONAME.");
+    puts("   if any BLOCK is specified, symlink those block's");
+    puts("   contents into their proper locations.");
+    puts("   if --interactive is provided instead of BLOCK*");
+    puts("   a dialog will open to allow choice of blocks");
     puts("");
     puts("dotfiles --sync");
     puts("   refresh the symlinks in the home directory");
@@ -254,8 +259,16 @@ char *get_dotfiles_dir() {
     return result;
 }
 
-
+// if a file does not start with /, then prepend /home/[USER]
 char *get_home_file(char *s) {
+    if (!s) {
+        perror("cannot operate on negative string");
+        exit(1);
+    }
+    if (s[0] == '/') {
+        return s;
+    }
+
     char *home = get_user_home();
 #ifdef DEBUG
     int more = 8;
@@ -293,6 +306,7 @@ void sync_advanced(dmap *symlinks, char*(*modifier)(char *)) {
     char *lito;
 
     map_each(symlinks, name, lito) {
+
         if (symlink(modifier(lito), get_home_file(name))) {
             printf("could not symlink file %s\n", get_home_file(name));
         }
