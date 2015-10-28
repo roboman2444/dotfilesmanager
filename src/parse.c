@@ -427,6 +427,12 @@ int main(int argc, char **argv) {
     }
 
     if (strncmp(argv[1], "--track", 8) == 0) { // TODO some tweaks on tracking
+        if (argc < 5)
+        {
+            printf("invalid number of arguments! Exiting ...\n");
+            return 1;
+        }
+
 	char *file = argv[2];
         char *name = get_dotfiles_file(argv[3]);
     
