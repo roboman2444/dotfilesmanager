@@ -68,7 +68,9 @@ int is_symlink(char *file) {
         perror("cannot operate on null file");
         exit(1);
     }
-    
+    struct stat buf;
+    lstat(file, &buf);
+    return S_ISLNK(buf.st_mode);
 }
 
 void add_symlink(dmap *result, char *line) {
@@ -275,18 +277,10 @@ char *get_home_file(char *s) {
     }
 
     char *home = get_user_home();
-#ifdef DEBUG
-    int more = 8;
-#else
     int more = 1;
-#endif
     int len = strlen(home) + more + strlen(s);
     char *result = calloc(sizeof(char), len);
-#ifdef DEBUG
-    sprintf(result, "%s/_test_/%s", home, s);
-#else
     sprintf(result, "%s/%s", home, s);
-#endif
     return result;
 }
 
@@ -311,9 +305,17 @@ void sync_advanced(dmap *symlinks, char*(*modifier)(char *)) {
     char *lito;
 
     map_each(symlinks, name, lito) {
-
-        if (symlink(modifier(lito), get_home_file(name))) {
-            printf("could not symlink file %s\n", get_home_file(name));
+        name = get_home_file(name);
+        char *name2 = get_home_file(name);
+        if (is_symlink(name)) {
+            if (unlink(name)) {
+                puts("cannot unlink");
+            }
+        }
+        puts(name2);
+        if (symlink(modifier(lito), name2)) {
+            puts(name2);
+            printf("could not symlink file %s\n", name2);
         }
     }
 }
@@ -341,15 +343,12 @@ void check() {
         char *name;
         char *link;
         map_each(symlinks, name, link) {
-            struct stat buf;
             char *file = get_home_file(name);
 
-            lstat(file, &buf);
             printf("checking ... (%s->%s)\n", file, link);
-            if (!S_ISLNK(buf.st_mode)) {
+            if (is_symlink(file)) {
                 printf("WARNING: %s is not properly linked!\n", file);
             }
-
         }
     }
 }
