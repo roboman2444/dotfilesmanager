@@ -219,7 +219,7 @@ void cmdlist() {
     puts("dotfiles --sync");
     puts("   refresh the symlinks in the home directory");
     puts("");
-    puts("dotfiles --init");
+    puts("dotfiles --init [DIR]");
     puts("   if no DIR is provided, create ~/.dotfiles, otherwise");
     puts("   copies the DIR to ~/.dotfiles and creates a");
     puts("   symlink to ~/.dotfiles in the old location.");
@@ -401,6 +401,11 @@ int main(int argc, char **argv) {
     }
 
     if (strncmp(argv[1], "--track", 8) == 0) { // TODO some tweaks on tracking
+        if (argc < 4) {
+            printf("invalid number of arguments! Exiting ...\n");
+            return 1;
+        }
+
         char *file = argv[2];
         char *name = get_dotfiles_file(argv[3]);
     
