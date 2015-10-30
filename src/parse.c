@@ -306,16 +306,20 @@ void sync_advanced(dmap *symlinks, char*(*modifier)(char *)) {
     char *lito;
 
     map_each(symlinks, name, lito) {
-        char *name2 = get_home_file(name);
         name = get_home_file(name);
         if (is_symlink(name)) {
             if (unlink(name)) {
-                puts("cannot unlink");
+                printf("cannot unlink (%s)\n", name);
             }
-        }
-
-        if (symlink(modifier(lito), name)) {
-            printf("name: %p: %s\nname2: %p %s\n", name, name, name2, name2);
+            if (symlink(modifier(lito), name)) {
+                printf("symlink (%s -> %s) failed\n", name, lito);
+            }
+        } else if (access(name, F_OK) != -1) {
+            printf("skipping (%s), is not a symlink.\n", lito);
+        } else {
+            if (symlink(modifier(lito), name)) {
+                printf("symlink (%s -> %s) failed\n", name, lito);
+            }
         }
     }
 }
